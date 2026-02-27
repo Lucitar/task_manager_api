@@ -1,6 +1,7 @@
 from app.repositories.task_repository import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.models.task import Task
+from app.services.message_publisher import publish_task_created
 from fastapi import HTTPException
 from typing import Optional
 
@@ -18,7 +19,14 @@ class TaskService:
         return task
 
     def create_task(self, data: TaskCreate) -> Task:
-        return self.repository.create(data)
+        task = self.repository.create(data)
+        publish_task_created(
+            task_id=task.id,
+            title=task.title,
+            description=task.description or "",
+            priority=task.priority
+        )
+        return task
 
     def update_task(self, task_id: int, data: TaskUpdate) -> Task:
         task = self.get_task(task_id)
